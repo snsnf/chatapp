@@ -1,3 +1,3 @@
 # chat
 
-A new Flutter project.
+A new chat app for students!
