@@ -30,6 +30,12 @@ class _ChatState extends State<Chat> {
     }
   }
 
+  // delete message
+  void deleteMessage(String messageID) async {
+    await _chatService.deleteMessage(
+        messageID, _auth.currentUser!.uid, widget.receiverUserID);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,6 +65,7 @@ class _ChatState extends State<Chat> {
         }
 
         return ListView(
+          padding: const EdgeInsets.only(top: 20.0),
           children: snapshot.data!.docs
               .map((document) => _buildMessageItem(document))
               .toList(),
@@ -85,7 +92,11 @@ class _ChatState extends State<Chat> {
             children: [
               Text(data['senderName']),
               const SizedBox(height: 5.0),
-              ChatBubble(message: data['message'])
+              ChatBubble(
+                  message: data['message'],
+                  onTap: () {
+                    _showDeleteDialog(data['messageID']);
+                  })
             ],
           ),
         ));
@@ -119,6 +130,39 @@ class _ChatState extends State<Chat> {
               ),
               child: const Icon(Icons.arrow_upward),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // add a dialog to confirm delete message
+  void _showDeleteDialog(String messageID) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10.0),
+        ),
+        title: const Text('Delete Message'),
+        content: const Text('Are you sure you want to delete this message?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            // change color of ripple effect
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            onPressed: () {
+              deleteMessage(messageID);
+              Navigator.pop(context);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red),),
           ),
         ],
       ),

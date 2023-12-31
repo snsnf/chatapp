@@ -3,6 +3,7 @@ import 'package:chat/services/auth/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 final AuthService authService = AuthService();
 
@@ -18,13 +19,14 @@ class ChatService extends ChangeNotifier {
     final senderEmail = user.email;
     final senderName = name;
     final timestamp = Timestamp.now();
-
+    final messageID = const Uuid().v4();
     Message newMessage = Message(
       senderID: senderID,
       senderEmail: senderEmail!,
       senderName: senderName!,
       receiverID: receiverID,
       message: message,
+      messageID: messageID,
       timestamp: timestamp.toString(),
     );
 
@@ -36,7 +38,8 @@ class ChatService extends ChangeNotifier {
         .collection('chat_rooms')
         .doc(chatRoomID)
         .collection('messages')
-        .add(newMessage.toMap());
+        .doc(messageID)
+        .set(newMessage.toMap());
   }
 
   Stream<QuerySnapshot> getMessages(String userID, String otherUserID) {
@@ -51,5 +54,19 @@ class ChatService extends ChangeNotifier {
         .orderBy('timestamp', descending: false)
         .snapshots();
 
+  }
+
+  // delete message
+  Future<void> deleteMessage(String messageID, String userID, String otherUserID) async {
+    print('delete message inside chat service');
+    List<String> ids = [userID, otherUserID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+    await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomID)
+        .collection('messages')
+        .doc(messageID)
+        .delete();
   }
 }
